@@ -1,0 +1,159 @@
+#include <conio.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <locale.h>
+
+struct dugum
+{
+    int kelimeadet;
+    char *kelime ;
+    struct dugum * sonraki;
+};
+
+struct dugum  *ilk=NULL, *son=NULL,  *gecici;
+
+
+void SonaEkle(char *a,int adet)
+{
+    struct dugum *yeni =  NULL; yeni =(struct dugum*) malloc(sizeof(struct dugum));
+    yeni->kelime = (char*)malloc(strlen(a)+1);
+
+    strcpy( yeni->kelime,a);
+    yeni->kelimeadet=adet;
+
+    if(ilk==NULL){
+        ilk=yeni;
+        son=yeni;
+        son->sonraki=NULL;
+    }
+    else{
+        son->sonraki=yeni;
+        son=yeni;
+        son->sonraki=NULL;
+    }
+}
+void BasaEkle(char *a, int adet)
+{
+    struct dugum *yeni =  NULL; yeni =(struct dugum*) malloc(sizeof(struct dugum));
+    yeni->kelime = (char*)malloc(strlen(a)+1);
+
+    strcpy( yeni->kelime,a);
+    yeni->kelimeadet=adet;
+    if(ilk==NULL) {
+        ilk=yeni;
+        son=yeni;
+        son->sonraki=NULL;
+    }
+    else {
+        yeni->sonraki=ilk;
+        ilk=yeni;
+    }
+}
+void ArayaEkle(char *a, int adet)
+{
+    struct dugum *yeni =  NULL;yeni =(struct dugum*) malloc(sizeof(struct dugum));
+    yeni->kelime = (char*)malloc(strlen(a)+1);
+
+    strcpy( yeni->kelime,a);
+    yeni->kelimeadet=adet;
+
+    // sýra bulma islemi
+
+    struct dugum *siraSonrakiBul=ilk;
+    int siraNo =1;
+    while(siraSonrakiBul!=NULL){
+        if(siraSonrakiBul->kelimeadet<adet){break;}
+        siraNo++;
+        siraSonrakiBul=siraSonrakiBul->sonraki;
+    }
+
+    // araya girmek için önceki bulunuyor
+    struct dugum *siraOncekiBul=ilk;
+
+    for(int i =1 ; i<=siraNo-2 ; i++){siraOncekiBul=siraOncekiBul->sonraki;}
+
+    siraOncekiBul->sonraki = yeni; // onceki ve sonrakinin arasýna baðlanýyor
+    yeni->sonraki=siraSonrakiBul;
+}
+void Listele()
+{
+    gecici=ilk;
+    int i=1;
+    while(gecici!=NULL){
+        printf(" %d-) %s : %d \n ",i,gecici->kelime,gecici->kelimeadet);
+        gecici=gecici->sonraki;
+        i++;
+    }
+}
+
+struct dugum *Ara(char *x)
+{
+    struct dugum *ara=ilk;
+
+    while(ara!=NULL){
+        if(strcmp(ara->kelime,x)==0){return ara;}
+        ara=ara->sonraki;
+    }
+    return NULL;
+}
+
+void nereyeEklenecek(char *eklenecekKelime, int kelimeAdet)
+{
+    if(ilk==NULL){BasaEkle(eklenecekKelime,kelimeAdet);}                          // dugum yoksa basa ekle
+    else if(ilk->kelimeadet<=kelimeAdet){BasaEkle(eklenecekKelime,kelimeAdet);}   // 1. dugumden büyükse basa ekle
+    else if( son->kelimeadet >=kelimeAdet){SonaEkle(eklenecekKelime,kelimeAdet);} // son dugumden kucukse sona ekle
+    else{ ArayaEkle(eklenecekKelime,kelimeAdet);}                                 // arada bir yerdeyse araya ekle
+}
+
+int main()
+{
+    printf("Kelime sayma programina hosgeldiniz.\n \n ");
+    setlocale(LC_ALL, "turkish");
+    FILE *secmeDosyasi = fopen("metin.txt","r");
+
+
+
+    char *secilenKelime=(char*)malloc(sizeof(char));
+    char *tarananKelime=(char*)malloc(sizeof(char));
+
+
+    int adets;
+    int kontrol;
+    while(!feof(secmeDosyasi))
+    {
+        adets=0;kontrol =0;
+
+        fscanf(secmeDosyasi,"%s",secilenKelime);              // dosyayý actým ve tek tek kelime alýyorum
+        secilenKelime = strtok (secilenKelime," ");
+
+        if(ilk== NULL) { kontrol= 0;}      // liste bossa zaten yoktur kontrol=0
+        else
+        {
+            if((Ara(secilenKelime)==NULL)) { kontrol =0;}  // liste dolu ise ara metodu listede dolasýp kontrol ediyor yoksa null donecek kontrol =0 olacak
+            else{kontrol =1;}
+        }
+                        // kelime listede varsa döngü biter ve 2. kelime için basa döner. alt tarafa girmez
+        if(kontrol==0)  // kelime listede varmý kontrol edildi kontrol 0 ise bu listede olmayan bir kelime
+        {
+            FILE *taramaDosyasi = fopen("metin.txt","r");    // dosyayý ikinci kez açtým
+
+            while(!feof(taramaDosyasi))
+            {
+                fscanf(taramaDosyasi,"%s",tarananKelime);            // her seferinde 1. kelimeden son kelimeye kadar tarýyorum
+                tarananKelime = strtok (tarananKelime," ");
+                if(strcmp(tarananKelime,secilenKelime)==0){adets++;}  // adets her turda sýfýrlanýr, seçilen kelime metinde bulundukca ++ lanýr
+
+            }
+            nereyeEklenecek(secilenKelime,adets); // listede olmayan "secilenKelime" adedi ile listeye ekleme metoduna gönderiliyor
+
+
+            fclose(taramaDosyasi); // ikinci açýlan dosya kapatýldý
+        }
+    }
+            fclose(secmeDosyasi); // 1. acýlan dosya kapatýldý
+
+    Listele(); // listeyi yazar
+
+    return 0;
+}
