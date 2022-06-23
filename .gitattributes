@@ -5,4 +5,4 @@
 *.css linguist-detectable=false
 *.aspnet linguist-detectable=false
 # Direct csharp
-*.* linguist-language=c
+*.* linguist-language=C
